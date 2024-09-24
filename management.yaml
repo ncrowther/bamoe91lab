@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: management-console
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: management-console
+  template:
+    metadata:
+      labels:
+        app: management-console
+    spec:
+      containers:
+      - name: management-console
+        image: quay.io/bamoe/management-console:9.1.0-ibm-0001
+        ports:
+        - containerPort: 8080
+        env:
+        - name: RUNTIME_TOOLS_MANAGEMENT_CONSOLE_KOGITO_ENV_MODE
+          value: "PROD"
+        - name: RUNTIME_TOOLS_MANAGEMENT_CONSOLE_DATA_INDEX_ENDPOINT
+          value: "http://cc-application-approval-student01-namespace.apps.tzrosa-8bc90xwq.pzcn.p1.openshiftapps.com/graphql"
+        - name: KOGITO_CONSOLES_KEYCLOAK_HEALTH_CHECK_URL
+          value: "https://keycloak-keycloak.apps.j4fxfomh.eastus.aroapp.io/auth/realms/jbpm-openshift/.well-known/openid-configuration"
+        - name: KOGITO_CONSOLES_KEYCLOAK_URL
+          value: "https://keycloak-keycloak.apps.j4fxfomh.eastus.aroapp.io/auth"
+        - name: KOGITO_CONSOLES_KEYCLOAK_REALM
+          value: "jbpm-openshift"
+        - name: KOGITO_CONSOLES_KEYCLOAK_CLIENT_ID
+          value: "management-console"
+        - name: KOGITO_CONSOLES_KEYCLOAK_CLIENT_SECRET
+          value: "ucLKmDmJCNwS4vj4vtenYdFktdMGWCDW"
+      #   - name: KOGITO_SVG_DIR
+      #     value: "/home/kogito/data/svg/"
+      # #   volumeMounts:
+      # #   - name: process-svgs
+      # #     mountPath: /home/kogito/data/svg/
+      # # volumes:
+      # # - name: process-svgs
+      # #   configMap:
+      # #     name: process-svgs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: management-console
+spec:
+  selector:
+    app: management-console
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: management-console
+spec:
+  to:
+    kind: Service
+    name: management-console
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
